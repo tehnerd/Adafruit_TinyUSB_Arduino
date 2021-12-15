@@ -12,7 +12,7 @@ extern "C" {
   HID_COLLECTION ( HID_COLLECTION_APPLICATION )                 ,\
     /* Report ID if any */\
     __VA_ARGS__ \
-    /* 8 bit X, Y, Z, Rz, Rx, Ry (min -127, max 127 ) */ \
+    /* 16 bit X, Y */ \
     HID_USAGE_PAGE   ( HID_USAGE_PAGE_DESKTOP                 ) ,\
     HID_USAGE        ( HID_USAGE_DESKTOP_X                    ) ,\
     HID_USAGE        ( HID_USAGE_DESKTOP_Y                    ) ,\
@@ -21,12 +21,21 @@ extern "C" {
     HID_REPORT_COUNT ( 2                                     ) ,\
     HID_REPORT_SIZE  ( 0x10                                      ) ,\
     HID_INPUT        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
+    /* 16 bit Button Map */ \
+    HID_USAGE_PAGE   ( HID_USAGE_PAGE_BUTTON                  ) ,\
+    HID_USAGE_MIN    ( 1                                      ) ,\
+    HID_USAGE_MAX    ( 16                                     ) ,\
+    HID_LOGICAL_MIN  ( 0                                      ) ,\
+    HID_LOGICAL_MAX  ( 1                                      ) ,\
+    HID_REPORT_COUNT ( 16                                     ) ,\
+    HID_REPORT_SIZE  ( 1                                      ) ,\
+    HID_INPUT        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
   HID_COLLECTION_END \
 
 
 class Joystick: public Adafruit_USBD_HID {
 public:
-    explicit Joystick(uint8_t report_id);
+    Joystick(uint8_t report_id, uint8_t buttons = 16);
 
     void setXAxisRange(int16_t minimum, int16_t maximum) {
         xAxisMinimum_ = minimum;
@@ -42,15 +51,19 @@ public:
     void setXAxis(int16_t value, bool send_report = false);
 
     void setYAxis(int16_t value, bool send_report = false);
+    // used to set 8 buttons at once. when receive state from PISO shift register
+    void setButtons(uint8_t value, uint8_t offset);
 
     void generateAndSendReport();
 
 private:
-    int16_t xAxis_;
+    uint8_t buttons_;
+    uint32_t buttonsState_ = 0;
+    int16_t xAxis_ = 0;
     int16_t xAxisMaximum_ = DEFAULT_AXIS_MAXIMUM;
     int16_t xAxisMinimum_ = DEFAULT_AXIS_MINIMUM;
 
-    int16_t yAxis_;
+    int16_t yAxis_ = 0;
     int16_t yAxisMaximum_ = DEFAULT_AXIS_MAXIMUM;
     int16_t yAxisMinimum_ = DEFAULT_AXIS_MINIMUM;
     bool changed_ = false;
